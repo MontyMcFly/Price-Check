@@ -2,14 +2,13 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,10 +18,13 @@ export default function Login() {
     setLoading(true);
     setError('');
 
+    // Generate the internal email from username
+    const email = `${username.trim().toLowerCase()}@pricecheck.app`;
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      setError('Invalid username or password.');
       setLoading(false);
     } else {
       router.push('/');
@@ -45,15 +47,16 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.inputGroup}>
-            <label className="label-sm">Email</label>
+            <label className="label-sm">Username</label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              type="text"
+              id="username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
               required
-              placeholder="tu@email.com"
+              placeholder="e.g. Puguita"
               className={styles.input}
+              autoCapitalize="none"
             />
           </div>
           <div className={styles.inputGroup}>
@@ -64,7 +67,7 @@ export default function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
               className={styles.input}
             />
           </div>
