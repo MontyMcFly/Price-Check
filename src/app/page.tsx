@@ -2,24 +2,65 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import styles from './page.module.css';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  created_at: string;
+}
 
 export default function Dashboard() {
-  const [savings, setSavings] = useState(142.50);
-  const [itemsOnList, setItemsOnList] = useState(3);
-  const [bestSavings, setBestSavings] = useState<{ id: string; name: string; price: number }[]>([]);
+  const { user, profile, loading, signOut } = useAuth();
+  const router = useRouter();
+  const [recentProducts, setRecentProducts] = useState<Product[]>([]);
+  const [listCount, setListCount] = useState(0);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real scenario, we would fetch data from Supabase here
-    // supabase.from('products').select('*').then(...)
-    
-    // For now, using mock data mimicking the design
-    setBestSavings([
-      { id: '1', name: 'Sony WH-1000XM4', price: 298.00 },
-      { id: '2', name: 'Apple Watch Series 8', price: 399.00 }
-    ]);
-  }, []);
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchDashboardData() {
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, category, created_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      setRecentProducts(products || []);
+
+      const { count } = await supabase
+        .from('shopping_list')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .eq('user_id', user!.id);
+
+      setListCount(count || 0);
+      setProductsLoading(false);
+    }
+
+    fetchDashboardData();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <p className="body-md">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className={styles.dashboardContainer}>
@@ -27,51 +68,76 @@ export default function Dashboard() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 className="headline-lg">Price Check</h1>
-            <h2 className="headline-md" style={{ marginTop: 'var(--spacing-lg)' }}>Hello, Alex 👋</h2>
-            <p className="body-lg" style={{ color: 'var(--color-secondary)' }}>Ready to find the best deals today?</p>
+            <h2 className="headline-md" style={{ marginTop: 'var(--spacing-sm)' }}>
+              Hello, {profile?.username || 'there'} 👋
+            </h2>
+            <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Ready to find the best deals today?</p>
           </div>
-          <Link href="/products" style={{ 
-            display: 'flex', alignItems: 'center', gap: '4px', 
-            backgroundColor: 'var(--color-surface-container)', 
-            padding: '8px 16px', borderRadius: 'var(--radius-full)',
-            color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none'
-          }}>
-            <span className="material-symbols-outlined">inventory_2</span>
-            Catalog
-          </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', alignItems: 'flex-end' }}>
+            <Link href="/products" style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              backgroundColor: 'var(--color-surface-container)',
+              padding: '8px 16px', borderRadius: 'var(--radius-full)',
+              color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none',
+              fontSize: '14px'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>inventory_2</span>
+              Catalog
+            </Link>
+            <button onClick={signOut} style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              backgroundColor: 'transparent',
+              padding: '6px 12px', borderRadius: 'var(--radius-full)',
+              color: 'var(--color-secondary)', fontWeight: 600,
+              fontSize: '13px', border: '1px solid var(--color-outline-variant)'
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
       <section className={styles.summaryCard}>
         <div className={styles.savingsInfo}>
-          <span className="price-display">${savings.toFixed(2)}</span>
-          <span className="label-caps">Target</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--color-primary)' }}>shopping_basket</span>
+          <span className="headline-md" style={{ color: 'var(--color-primary)' }}>{listCount}</span>
         </div>
-        <p className="body-md">{itemsOnList} items on list • Save $18</p>
+        <p className="body-md">items on your shopping list</p>
+        <Link href="/list" style={{
+          display: 'inline-block', marginTop: 'var(--spacing-sm)',
+          color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px'
+        }}>
+          View list →
+        </Link>
       </section>
 
       <section className={styles.section}>
-        <h3 className="headline-sm">Today's Best Savings</h3>
-        <div className={styles.cardList}>
-          {bestSavings.map(item => (
-            <div key={item.id} className={styles.productCard}>
-              <h4 className="body-lg" style={{ fontWeight: 600 }}>{item.name}</h4>
-              <p className="price-display">${item.price.toFixed(2)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <h3 className="headline-sm">Recently Watched</h3>
-        <div className={styles.cardList}>
-          <div className={styles.productCard}>
-            <h4 className="body-lg" style={{ fontWeight: 600 }}>MacBook Air M2</h4>
+        <h3 className="headline-sm">Recently Added Products</h3>
+        {productsLoading ? (
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Loading...</p>
+        ) : recentProducts.length === 0 ? (
+          <div className={styles.emptyCard}>
+            <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--color-outline-variant)' }}>inventory_2</span>
+            <p className="body-md" style={{ color: 'var(--color-secondary)', marginTop: 'var(--spacing-sm)' }}>
+              No products yet. <Link href="/add" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Add the first one!</Link>
+            </p>
           </div>
-          <div className={styles.productCard}>
-            <h4 className="body-lg" style={{ fontWeight: 600 }}>Breville Barista Express</h4>
+        ) : (
+          <div className={styles.cardList}>
+            {recentProducts.map(product => (
+              <div key={product.id} className={styles.productCard}>
+                <div>
+                  <h4 className="body-lg" style={{ fontWeight: 600 }}>{product.name}</h4>
+                  <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>{product.category || 'General'}</span>
+                </div>
+                <span className="label-caps" style={{ color: 'var(--color-outline)' }}>
+                  {new Date(product.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
+        )}
       </section>
     </div>
   );
