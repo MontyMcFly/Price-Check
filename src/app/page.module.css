@@ -1,0 +1,49 @@
+.dashboardContainer {
+  padding: var(--spacing-container-margin);
+}
+
+.header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.summaryCard {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid var(--color-surface-container-high);
+}
+
+.savingsInfo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  color: var(--color-primary-container);
+  margin-bottom: var(--spacing-sm);
+}
+
+.section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.section h3 {
+  margin-bottom: var(--spacing-md);
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-gutter);
+}
+
+.productCard {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-surface-container);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
