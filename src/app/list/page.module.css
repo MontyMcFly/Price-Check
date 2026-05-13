@@ -1,0 +1,59 @@
+.container {
+  padding: var(--spacing-container-margin);
+}
+
+.header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) 0;
+  text-align: center;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px dashed var(--color-outline-variant);
+}
+
+.listGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-gutter);
+}
+
+.listItem {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-surface-container);
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.quantity {
+  background-color: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priceInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-surface-container-lowest);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary-container);
+}
