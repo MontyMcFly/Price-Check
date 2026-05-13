@@ -1,0 +1,198 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.section {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-surface-container-high);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-bottom: calc(-1 * var(--spacing-xs));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--color-outline);
+}
+
+.row {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+}
+
+.unitGroup {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.unitSelect {
+  max-width: 72px;
+  flex-shrink: 0;
+}
+
+.input {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  background-color: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  font-family: var(--font-family-base);
+  font-size: 15px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.input::placeholder {
+  color: var(--color-outline);
+}
+
+/* Price field */
+.priceWrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.currencySymbol {
+  position: absolute;
+  left: 14px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-primary);
+  pointer-events: none;
+}
+
+.priceInput {
+  padding-left: 30px !important;
+  font-size: 18px !important;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Add to list checkbox */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  padding: var(--spacing-md);
+  background-color: var(--color-surface-container-lowest);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  transition: background-color 0.2s;
+}
+
+.checkboxLabel:hover {
+  background-color: var(--color-primary-container);
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Alerts */
+.successMsg {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.errorMsg {
+  background-color: var(--color-error-container);
+  color: var(--color-error);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  border-left: 4px solid var(--color-error);
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding-bottom: var(--spacing-lg);
+}
+
+.cancelBtn {
+  padding: 12px 20px;
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  color: var(--color-on-surface);
+  font-weight: 600;
+  font-size: 15px;
+  border: 1px solid var(--color-outline-variant);
+  transition: background-color 0.2s;
+}
+
+.cancelBtn:hover {
+  background-color: var(--color-surface-container);
+}
+
+.submitBtn {
+  flex: 1;
+  padding: 14px 24px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  font-size: 16px;
+  transition: background-color 0.2s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

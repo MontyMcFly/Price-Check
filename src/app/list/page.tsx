@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import styles from './page.module.css';
+import { useRouter } from 'next/navigation';
 
 interface ListItem {
   id: string;
@@ -17,85 +19,106 @@ interface ListItem {
 }
 
 export default function SmartList() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [items, setItems] = useState<ListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchList() {
-      const { data: listData, error: listError } = await supabase
-        .from('shopping_list')
-        .select(`
-          id, 
-          quantity, 
-          product_id,
-          products (id, name, category)
-        `)
-        .eq('status', 'pending');
+    if (!loading && !user) router.push('/login');
+  }, [user, loading, router]);
 
-      if (listError) {
-        console.error('Error fetching list:', listError);
-        setLoading(false);
-        return;
-      }
+  useEffect(() => {
+    if (!user) return;
+    fetchList();
+  }, [user]);
 
-      const itemsWithPrices = await Promise.all(
-        (listData || []).map(async (item) => {
-          const { data: pricesData } = await supabase
-            .from('prices')
-            .select('price, stores(name)')
-            .eq('product_id', item.product_id)
-            .order('price', { ascending: true })
-            .limit(1);
+  async function fetchList() {
+    setListLoading(true);
+    const { data: listData, error: listError } = await supabase
+      .from('shopping_list')
+      .select(`id, quantity, product_id, products (id, name, category)`)
+      .eq('status', 'pending')
+      .eq('user_id', user!.id);
 
-          const bestPriceObj = pricesData?.[0];
-          
-          return {
-            id: item.id,
-            quantity: item.quantity,
-            product: Array.isArray(item.products) ? item.products[0] : item.products, // Type safety fallback
-            bestPrice: bestPriceObj?.price || 0,
-            bestStore: bestPriceObj?.stores ? (Array.isArray(bestPriceObj.stores) ? (bestPriceObj.stores[0] as any).name : (bestPriceObj.stores as any).name) : 'Unknown',
-          } as ListItem;
-        })
-      );
-
-      setItems(itemsWithPrices);
-      setLoading(false);
+    if (listError) {
+      console.error('Error fetching list:', listError);
+      setListLoading(false);
+      return;
     }
 
-    fetchList();
-  }, []);
+    const itemsWithPrices = await Promise.all(
+      (listData || []).map(async (item) => {
+        const { data: pricesData } = await supabase
+          .from('prices')
+          .select('price, stores(name)')
+          .eq('product_id', item.product_id)
+          .order('price', { ascending: true })
+          .limit(1);
+
+        const bestPriceObj = pricesData?.[0];
+        const prod = Array.isArray(item.products) ? item.products[0] : item.products;
+
+        return {
+          id: item.id,
+          quantity: item.quantity,
+          product: prod,
+          bestPrice: bestPriceObj?.price || 0,
+          bestStore: bestPriceObj?.stores ? (Array.isArray(bestPriceObj.stores) ? (bestPriceObj.stores[0] as any).name : (bestPriceObj.stores as any).name) : 'No price yet',
+        } as ListItem;
+      })
+    );
+
+    setItems(itemsWithPrices);
+    setListLoading(false);
+  }
+
+  const handleRemove = async (id: string) => {
+    await supabase.from('shopping_list').delete().eq('id', id);
+    setItems(items.filter(i => i.id !== id));
+  };
 
   const totalEstimated = items.reduce((sum, item) => sum + (item.bestPrice * item.quantity), 0);
+
+  if (loading) return null;
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className="headline-lg">Smart List</h1>
+        <h1 className="headline-lg">My List</h1>
         <p className="body-md" style={{ color: 'var(--color-secondary)' }}>
-          {items.length} items • Estimated Total: <strong className="price-display" style={{fontSize: '18px'}}>${totalEstimated.toFixed(2)}</strong>
+          {items.length} items{totalEstimated > 0 ? ` • Est. total: ` : ''}
+          {totalEstimated > 0 && <strong className="price-display" style={{ fontSize: '18px' }}>${totalEstimated.toFixed(2)}</strong>}
         </p>
       </header>
 
-      {loading ? (
+      {listLoading ? (
         <p className="body-md">Loading your list...</p>
       ) : items.length === 0 ? (
         <div className={styles.emptyState}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-outline-variant)' }}>shopping_cart</span>
           <p className="body-lg" style={{ marginTop: 'var(--spacing-md)' }}>Your list is empty.</p>
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Add items to see price comparisons.</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Go to the Catalog and tap + to add products.</p>
         </div>
       ) : (
         <div className={styles.listGroup}>
           {items.map(item => (
             <div key={item.id} className={styles.listItem}>
               <div className={styles.itemHeader}>
-                <h3 className="body-lg" style={{ fontWeight: 600 }}>{item.product?.name || 'Unknown Product'}</h3>
-                <span className={styles.quantity}>x{item.quantity}</span>
+                <h3 className="body-lg" style={{ fontWeight: 600 }}>{item.product?.name || 'Unknown'}</h3>
+                <button
+                  onClick={() => handleRemove(item.id)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: '4px' }}
+                  aria-label="Remove from list"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove_circle</span>
+                </button>
               </div>
               <div className={styles.priceInfo}>
-                <span className="label-caps" style={{ color: 'var(--color-primary-container)' }}>Best Price at {item.bestStore}</span>
-                <span className="price-display">${item.bestPrice.toFixed(2)}</span>
+                <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>
+                  {item.bestPrice > 0 ? `Best at ${item.bestStore}` : 'No price recorded yet'}
+                </span>
+                {item.bestPrice > 0 && <span className="price-display">${item.bestPrice.toFixed(2)}</span>}
               </div>
             </div>
           ))}

@@ -1,0 +1,103 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--spacing-container-margin);
+  background: linear-gradient(160deg, #ecfdf5 0%, #f8fafc 60%);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.logoIcon {
+  font-size: 48px;
+  color: var(--color-primary);
+}
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-surface-container-high);
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.input {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+  background-color: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.submitBtn {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: var(--spacing-sm);
+  transition: background-color 0.2s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.errorAlert {
+  background-color: var(--color-error-container);
+  color: var(--color-error);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.footer {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+  color: var(--color-secondary);
+  font-size: 14px;
+}
+
+.footerLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}

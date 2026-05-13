@@ -2,168 +2,247 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 import styles from './page.module.css';
+import { useRouter } from 'next/navigation';
+import ProductPriceForm from '@/components/ProductPriceForm';
 
 interface Product {
   id: string;
   name: string;
   category: string;
+  quantity_amount: number | null;
+  unit: string | null;
+  package_size: number | null;
+  created_at: string;
 }
 
+const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
+
 export default function ProductsManager() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: '', category: '' });
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState('');
+
+  // Modal modes: 'add' = full form, 'edit' = simple product edit
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', category: '', quantity_amount: '', unit: 'ml', package_size: '1' });
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (!loading && !user) router.push('/login');
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!loading) fetchProducts();
+  }, [loading, user]);
 
   async function fetchProducts() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('name');
-    
-    if (error) {
-      console.error('Error fetching products:', error);
-    } else {
-      setProducts(data || []);
-    }
-    setLoading(false);
+    setProductsLoading(true);
+    setFetchError('');
+    const { data, error } = await supabase.from('products').select('*').order('name');
+    if (error) setFetchError(error.message);
+    else setProducts(data || []);
+    setProductsLoading(false);
   }
 
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 3000);
+  };
+
+  const handleAddToList = async (product: Product) => {
+    if (!user) { router.push('/login'); return; }
+    const { data: existing } = await supabase
+      .from('shopping_list').select('id')
+      .eq('product_id', product.id).eq('user_id', user.id).eq('status', 'pending').limit(1);
+
+    if (existing && existing.length > 0) {
+      setAddedIds(prev => new Set([...prev, product.id]));
+      showToast(`"${product.name}" ya está en tu lista`);
+      return;
+    }
+    const { error } = await supabase.from('shopping_list').insert({
+      product_id: product.id, user_id: user.id, quantity: 1, status: 'pending',
+    });
+    if (!error) {
+      setAddedIds(prev => new Set([...prev, product.id]));
+      showToast(`"${product.name}" agregado a tu lista ✓`);
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product? All related prices and shopping list items will also be removed.')) return;
-    
+    if (!confirm('¿Seguro? Esto eliminará también todos los precios y entradas de lista.')) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) {
-      alert('Error deleting product: ' + error.message);
-    } else {
-      setProducts(products.filter(p => p.id !== id));
-    }
+    if (!error) setProducts(products.filter(p => p.id !== id));
+    else alert('Error: ' + error.message);
   };
 
-  const openModal = (product?: Product) => {
-    if (product) {
-      setEditingId(product.id);
-      setFormData({ name: product.name, category: product.category || '' });
-    } else {
-      setEditingId(null);
-      setFormData({ name: '', category: '' });
-    }
-    setIsModalOpen(true);
+  const openEdit = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name,
+      category: product.category || '',
+      quantity_amount: product.quantity_amount?.toString() || '',
+      unit: product.unit || 'ml',
+      package_size: product.package_size?.toString() || '1',
+    });
+    setModalMode('edit');
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingId(null);
-    setFormData({ name: '', category: '' });
+  const handleEditSave = async () => {
+    if (!editingProduct || !editForm.name) return;
+    const { error } = await supabase.from('products').update({
+      name: editForm.name,
+      category: editForm.category || null,
+      quantity_amount: editForm.quantity_amount ? parseFloat(editForm.quantity_amount) : null,
+      unit: editForm.quantity_amount ? editForm.unit : null,
+      package_size: parseInt(editForm.package_size) || 1,
+    }).eq('id', editingProduct.id);
+    if (error) alert('Error: ' + error.message);
+    else { fetchProducts(); setModalMode(null); }
   };
 
-  const handleSave = async () => {
-    if (!formData.name) return alert('Name is required');
+  const closeModal = () => { setModalMode(null); setEditingProduct(null); };
 
-    if (editingId) {
-      const { error } = await supabase
-        .from('products')
-        .update({ name: formData.name, category: formData.category })
-        .eq('id', editingId);
-      
-      if (error) alert('Error updating: ' + error.message);
-      else fetchProducts();
-    } else {
-      const { error } = await supabase
-        .from('products')
-        .insert({ name: formData.name, category: formData.category });
-      
-      if (error) alert('Error adding: ' + error.message);
-      else fetchProducts();
-    }
-    closeModal();
-  };
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}><p className="body-md">Cargando...</p></div>;
 
   return (
     <div className={styles.container}>
+      {toast && <div className={styles.toast}>{toast}</div>}
+
       <header className={styles.header}>
         <div>
-          <h1 className="headline-lg">Catalog</h1>
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Manage your products database.</p>
+          <h1 className="headline-lg">Catálogo</h1>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>
+            {products.length} producto{products.length !== 1 ? 's' : ''} registrado{products.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <button onClick={() => openModal()} className={styles.addButton}>
-          <span className="material-symbols-outlined">add</span>
-          New
+        <button onClick={() => setModalMode('add')} className={styles.addButton}>
+          <span className="material-symbols-outlined">add</span>Nuevo
         </button>
       </header>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : products.length === 0 ? (
-        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>No products in database. Add one to get started.</p>
-      ) : (
-        <div className={styles.productList}>
-          {products.map(product => (
-            <div key={product.id} className={styles.productCard}>
-              <div className={styles.productInfo}>
-                <h3 className="body-lg" style={{ fontWeight: 600 }}>{product.name}</h3>
-                <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>
-                  {product.category || 'Uncategorized'}
-                </span>
-              </div>
-              <div className={styles.actions}>
-                <button onClick={() => openModal(product)} className={`${styles.iconButton} ${styles.editBtn}`} aria-label="Edit">
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>edit</span>
-                </button>
-                <button onClick={() => handleDelete(product.id)} className={`${styles.iconButton} ${styles.deleteBtn}`} aria-label="Delete">
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
-                </button>
-              </div>
-            </div>
-          ))}
+      {fetchError && (
+        <div style={{ background: 'var(--color-error-container)', color: 'var(--color-error)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+          Error: {fetchError}
         </div>
       )}
 
-      {isModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h2 className="headline-sm" style={{ marginBottom: 'var(--spacing-lg)' }}>
-              {editingId ? 'Edit Product' : 'New Product'}
-            </h2>
-            
-            <div className={styles.inputGroup}>
-              <label className="label-sm">Name</label>
-              <input 
-                type="text" 
-                value={formData.name} 
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className={styles.input}
-                placeholder="e.g. Avocado"
-              />
+      {productsLoading ? (
+        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Cargando catálogo...</p>
+      ) : products.length === 0 ? (
+        <div className={styles.emptyState}>
+          <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-outline-variant)' }}>inventory_2</span>
+          <p className="body-lg" style={{ marginTop: '12px' }}>Sin productos aún.</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Haz clic en "Nuevo" para agregar el primero.</p>
+        </div>
+      ) : (
+        <div className={styles.productList}>
+          {products.map(product => {
+            const isAdded = addedIds.has(product.id);
+            const hasContent = product.quantity_amount && product.unit;
+            const packageLabel = (product.package_size && product.package_size > 1)
+              ? `${product.package_size}x ` : '';
+            return (
+              <div key={product.id} className={styles.productCard}>
+                <div className={styles.productInfo}>
+                  <h3 className="body-lg" style={{ fontWeight: 600 }}>{product.name}</h3>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
+                    {product.category && (
+                      <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>{product.category}</span>
+                    )}
+                    {hasContent && (
+                      <span className={styles.unitBadge}>{packageLabel}{product.quantity_amount} {product.unit}</span>
+                    )}
+                    <span className="label-caps" style={{ color: 'var(--color-outline)' }}>
+                      {new Date(product.created_at).toLocaleDateString('es-MX')}
+                    </span>
+                  </div>
+                </div>
+                <div className={styles.actions}>
+                  {user && (
+                    <button
+                      onClick={() => handleAddToList(product)}
+                      className={`${styles.iconButton} ${isAdded ? styles.addedBtn : styles.addToListBtn}`}
+                      title={isAdded ? 'Ya en tu lista' : 'Agregar a lista'}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                        {isAdded ? 'check_circle' : 'playlist_add'}
+                      </span>
+                    </button>
+                  )}
+                  <button onClick={() => openEdit(product)} className={`${styles.iconButton} ${styles.editBtn}`}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>edit</span>
+                  </button>
+                  <button onClick={() => handleDelete(product.id)} className={`${styles.iconButton} ${styles.deleteBtn}`}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>delete</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ADD MODAL — full shared form */}
+      {modalMode === 'add' && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+              <h2 className="headline-sm">Registrar Producto</h2>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: 'var(--color-secondary)' }}>✕</button>
             </div>
-            
+            <ProductPriceForm
+              onSuccess={() => { fetchProducts(); closeModal(); showToast('Producto registrado ✓'); }}
+              onCancel={closeModal}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL — simple product metadata */}
+      {modalMode === 'edit' && editingProduct && (
+        <div className={styles.modalOverlay} onClick={closeModal}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <h2 className="headline-sm" style={{ marginBottom: 'var(--spacing-lg)' }}>Editar Producto</h2>
+
             <div className={styles.inputGroup}>
-              <label className="label-sm">Category</label>
-              <select 
-                value={formData.category} 
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
-                className={styles.input}
-              >
-                <option value="">Select...</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Groceries">Groceries</option>
-                <option value="Appliances">Appliances</option>
-                <option value="Other">Other</option>
+              <label className="label-sm">Nombre *</label>
+              <input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className={styles.input} />
+            </div>
+            <div className={styles.inputGroup}>
+              <label className="label-sm">Categoría</label>
+              <select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })} className={styles.input}>
+                <option value="">Seleccionar...</option>
+                {['Abarrotes','Bebidas','Lácteos','Carnes','Frutas y Verduras','Limpieza','Cuidado Personal','Electrónica','Electrodomésticos','Otro'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
+            </div>
+            <div className={styles.inputRow}>
+              <div className={styles.inputGroup} style={{ flex: 1 }}>
+                <label className="label-sm">Unidades</label>
+                <input type="number" min="1" value={editForm.package_size} onChange={e => setEditForm({ ...editForm, package_size: e.target.value })} className={styles.input} />
+              </div>
+              <div className={styles.inputGroup} style={{ flex: 2 }}>
+                <label className="label-sm">Contenido por unidad</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input type="number" min="0" step="0.1" value={editForm.quantity_amount} onChange={e => setEditForm({ ...editForm, quantity_amount: e.target.value })} className={styles.input} placeholder="355" />
+                  <select value={editForm.unit} onChange={e => setEditForm({ ...editForm, unit: e.target.value })} className={styles.input} style={{ maxWidth: '72px' }}>
+                    {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div className={styles.modalActions}>
-              <button onClick={closeModal} className={styles.cancelBtn}>Cancel</button>
-              <button onClick={handleSave} className={styles.saveBtn}>Save</button>
+              <button onClick={closeModal} className={styles.cancelBtn}>Cancelar</button>
+              <button onClick={handleEditSave} className={styles.saveBtn}>Guardar</button>
             </div>
           </div>
         </div>
