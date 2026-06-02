@@ -2,9 +2,9 @@ import { supabase } from './supabase';
 
 export const LEVEL_THRESHOLDS = [
   { level: 1, minXp: 0, title: 'Huevo' },
-  { level: 2, minXp: 50, title: 'Bebé' },
-  { level: 3, minXp: 150, title: 'Joven' },
-  { level: 4, minXp: 300, title: 'Adulto' },
+  { level: 2, minXp: 400, title: 'Bebé' },
+  { level: 3, minXp: 800, title: 'Joven' },
+  { level: 4, minXp: 1600, title: 'Adulto' },
 ];
 
 export function getLevelFromXp(xp: number): number {
@@ -26,29 +26,65 @@ export function getNextLevelThreshold(xp: number): number | null {
   return null; // Max level reached
 }
 
-export async function addXp(userId: string, amount: number): Promise<void> {
-  // First, get current XP
-  const { data: profile, error: fetchError } = await supabase
+export async function addReward(userId: string, xpAmount: number, coinAmount: number): Promise<void> {
+  const { data: profile, error } = await supabase
     .from('profiles')
-    .select('xp, level')
+    .select('xp, level, coins')
     .eq('id', userId)
     .single();
 
-  if (fetchError || !profile) {
-    console.error('Error fetching profile for XP update:', fetchError);
-    return;
-  }
+  if (error || !profile) return;
 
-  const newXp = (profile.xp || 0) + amount;
+  const newXp = (profile.xp || 0) + xpAmount;
+  const newCoins = (profile.coins || 0) + coinAmount;
   const newLevel = getLevelFromXp(newXp);
 
-  // Update profile
-  const { error: updateError } = await supabase
+  await supabase
     .from('profiles')
-    .update({ xp: newXp, level: newLevel })
+    .update({ xp: newXp, level: newLevel, coins: newCoins })
     .eq('id', userId);
+}
 
-  if (updateError) {
-    console.error('Error updating XP:', updateError);
+export async function feedAxolotl(userId: string, amount: number): Promise<void> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('hunger')
+    .eq('id', userId)
+    .single();
+
+  if (!profile) return;
+
+  const newHunger = Math.min(100, (profile.hunger || 0) + amount);
+  await supabase
+    .from('profiles')
+    .update({ hunger: newHunger })
+    .eq('id', userId);
+}
+
+export async function syncHunger(userId: string): Promise<void> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('hunger, last_hunger_update')
+    .eq('id', userId)
+    .single();
+
+  if (!profile) return;
+  
+  const lastUpdate = new Date(profile.last_hunger_update || Date.now());
+  const now = new Date();
+  const hoursPassed = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+  
+  // Only update if at least an hour has passed to avoid unnecessary DB writes
+  if (hoursPassed >= 1) {
+    const hungerDecay = Math.floor(hoursPassed) * 5; // Pierde 5 de hambre por hora
+    const newHunger = Math.max(0, (profile.hunger ?? 100) - hungerDecay);
+    
+    await supabase
+      .from('profiles')
+      .update({ 
+        hunger: newHunger, 
+        last_hunger_update: new Date().toISOString() 
+      })
+      .eq('id', userId);
   }
 }

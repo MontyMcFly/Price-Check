@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from './supabase';
+import { syncHunger } from './gamification';
 import type { Session, User } from '@supabase/supabase-js';
 
 interface Profile {
@@ -10,6 +11,8 @@ interface Profile {
   xp?: number;
   level?: number;
   pet_name?: string;
+  coins?: number;
+  hunger?: number;
 }
 
 interface AuthContextType {
@@ -37,9 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function fetchProfile(userId: string) {
+    // Sincroniza el hambre primero por si ha pasado tiempo
+    await syncHunger(userId);
+
     const { data } = await supabase
       .from('profiles')
-      .select('id, username, xp, level, pet_name')
+      .select('id, username, xp, level, pet_name, coins, hunger')
       .eq('id', userId)
       .single();
     setProfile(data);

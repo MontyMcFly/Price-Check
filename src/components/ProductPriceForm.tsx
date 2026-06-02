@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
-import { addXp } from '@/lib/gamification';
+import { addReward } from '@/lib/gamification';
 import styles from './ProductPriceForm.module.css';
 
 const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
@@ -139,11 +139,11 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         }
       }
       if (user) {
-        await addXp(user.id, 10);
+        await addReward(user.id, 10, 5);
         await refreshProfile();
       }
 
-      setSuccess('¡Producto y precio guardados correctamente! (+10 XP para tu Axolotl)');
+      setSuccess('¡Producto y precio guardados correctamente! (+10 XP, +5 🪙 para tu Axolotl)');
       setForm({
         productName: '', brand: '', category: '', units: '1', contentAmount: '',
         contentUnit: 'ml', date: today(), store: '', branch: '', price: '',

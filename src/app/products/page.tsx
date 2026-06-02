@@ -7,6 +7,7 @@ import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
 import ProductPriceForm from '@/components/ProductPriceForm';
 import { calculatePerformance } from '@/lib/utils/unitConverter';
+import { feedAxolotl } from '@/lib/gamification';
 
 interface Store {
   id: string;
@@ -50,7 +51,7 @@ interface ProductGroup {
 const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
 
 export default function ProductsManager() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -164,7 +165,9 @@ export default function ProductsManager() {
     });
     if (!error) {
       setAddedIds(prev => new Set([...prev, product.id]));
-      showToast(`"${product.name}" agregado a tu lista ✓`);
+      await feedAxolotl(user.id, 20);
+      if (refreshProfile) await refreshProfile();
+      showToast(`"${product.name}" agregado a tu lista (+20% Hambre) ✓`);
     }
   };
 
