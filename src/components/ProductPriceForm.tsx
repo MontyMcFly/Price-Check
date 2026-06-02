@@ -149,7 +149,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
       onSuccess?.();
 
     } catch (err: unknown) {
-      let message = t.form_error;
+      let message: string = t.form_error;
       if (err && typeof err === 'object') {
         if ('message' in err) message = String((err as { message: unknown }).message);
         if ('details' in err && (err as { details: unknown }).details) {
