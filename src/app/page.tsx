@@ -161,6 +161,17 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      <Link href="/feedback" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        padding: '12px', marginTop: 'var(--spacing-md)',
+        background: 'transparent', color: 'var(--color-secondary)',
+        border: '1px solid var(--color-outline-variant)', borderRadius: 'var(--radius-xl)',
+        fontWeight: 600, fontSize: '14px', textDecoration: 'none'
+      }}>
+        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat_bubble</span>
+        {t.fb_link}
+      </Link>
     </div>
   );
 }

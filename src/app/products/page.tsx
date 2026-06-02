@@ -94,7 +94,8 @@ export default function ProductsManager() {
     if (error) {
       setFetchError(error.message);
     } else {
-      const groups = groupProducts((data as any) || []);
+      const validProducts = (data || []).filter((p: any) => p.prices && p.prices.length > 0);
+      const groups = groupProducts(validProducts);
       setProductGroups(groups);
     }
     setProductsLoading(false);

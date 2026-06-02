@@ -190,6 +190,17 @@ const translations = {
     receipt_required: 'La foto del ticket es obligatoria.',
     receipt_uploading: 'Subiendo imagen...',
     receipt_change: 'Cambiar foto',
+
+    // Feedback
+    fb_title: 'Sugerencias',
+    fb_subtitle: '¡Ayúdanos a mejorar la app!',
+    fb_message: 'Tu mensaje',
+    fb_placeholder: 'Me gustaría que la app tuviera...',
+    fb_send: 'Enviar Sugerencia',
+    fb_sending: 'Enviando...',
+    fb_success: '¡Gracias por tus sugerencias! Las hemos recibido.',
+    fb_error: 'Hubo un error al enviar tu mensaje. Intenta de nuevo.',
+    fb_link: 'Dejar Feedback',
   },
 
   en: {
@@ -368,6 +379,17 @@ const translations = {
     receipt_required: 'Receipt photo is required.',
     receipt_uploading: 'Uploading image...',
     receipt_change: 'Change photo',
+
+    // Feedback
+    fb_title: 'Feedback',
+    fb_subtitle: 'Help us improve the app!',
+    fb_message: 'Your message',
+    fb_placeholder: 'I wish the app had...',
+    fb_send: 'Send Feedback',
+    fb_sending: 'Sending...',
+    fb_success: 'Thanks for your feedback! We have received it.',
+    fb_error: 'There was an error sending your message. Please try again.',
+    fb_link: 'Leave Feedback',
   },
 } as const;
 
