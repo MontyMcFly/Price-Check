@@ -24,6 +24,8 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [addToList, setAddToList] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     productName: '',
@@ -46,6 +48,12 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
     setLoading(true);
     setError('');
     setSuccess('');
+
+    if (!receiptFile) {
+      setError(t.receipt_required);
+      setLoading(false);
+      return;
+    }
 
     try {
       // 1. Find or create product
@@ -106,6 +114,21 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         storeId = newStore.id;
       }
 
+      // 2.5 Upload receipt
+      const fileExt = receiptFile.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${user?.id || 'anon'}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(filePath, receiptFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(filePath);
+
       // 3. Upsert price record
       const { error: priceErr } = await supabase.from('prices').upsert({
         product_id: productId,
@@ -113,6 +136,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         price: parseFloat(form.price),
         date_recorded: form.date,
         user_id: user?.id || null,
+        receipt_url: publicUrl,
       }, { onConflict: 'product_id,store_id' });
       if (priceErr) throw priceErr;
 
@@ -146,6 +170,8 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         contentUnit: 'ml', date: today(), store: '', branch: '', price: '',
       });
       setAddToList(false);
+      setReceiptFile(null);
+      setReceiptPreview(null);
       onSuccess?.();
 
     } catch (err: unknown) {
@@ -233,6 +259,49 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
             <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} required placeholder="0.00" className={`${styles.input} ${styles.priceInput}`} />
           </div>
         </div>
+        </div>
+      </div>
+
+      {/* ── SECTION: Ticket ── */}
+      <div className={styles.section}>
+        <p className={styles.sectionLabel}>{t.receipt_label}</p>
+        <p className="body-sm" style={{ color: 'var(--color-secondary)', marginBottom: '8px' }}>
+          {t.receipt_hint}
+        </p>
+
+        {receiptPreview ? (
+          <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: '8px', overflow: 'hidden', marginBottom: '8px' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={receiptPreview} alt="Receipt preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <button
+              type="button"
+              onClick={() => { setReceiptFile(null); setReceiptPreview(null); }}
+              style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
+            </button>
+          </div>
+        ) : (
+          <label className={styles.field} style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', border: '2px dashed var(--color-outline-variant)', borderRadius: '8px', background: 'var(--color-surface-container-lowest)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '32px', color: 'var(--color-primary)', marginBottom: '8px' }}>add_a_photo</span>
+            <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{t.receipt_label}</span>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setReceiptFile(file);
+                  const reader = new FileReader();
+                  reader.onloadend = () => setReceiptPreview(reader.result as string);
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+          </label>
+        )}
       </div>
 
       {user && (
@@ -252,7 +321,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
           </button>
         )}
         <button type="submit" disabled={loading} className={styles.submitBtn}>
-          {loading ? t.form_saving : t.form_save}
+          {loading ? t.receipt_uploading : t.form_save}
         </button>
       </div>
     </form>

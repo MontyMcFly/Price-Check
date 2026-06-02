@@ -109,6 +109,17 @@ export default function Dashboard() {
         <AxolotlPet variant="dashboard" />
       </section>
 
+      <Link href="/leaderboard" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        padding: '12px', marginBottom: 'var(--spacing-xl)',
+        background: 'linear-gradient(135deg, #fef3c7, #fde68a)', color: '#92400e',
+        borderRadius: 'var(--radius-xl)', fontWeight: 700, fontSize: '16px',
+        textDecoration: 'none', boxShadow: 'var(--shadow-sm)',
+        border: '1px solid #fcd34d', transition: 'transform 0.15s'
+      }}>
+        {t.lb_view}
+      </Link>
+
       <section className={styles.summaryCard}>
         <div className={styles.savingsInfo}>
           <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--color-primary)' }}>shopping_basket</span>

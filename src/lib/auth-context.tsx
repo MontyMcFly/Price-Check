@@ -43,6 +43,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Sincroniza el hambre primero por si ha pasado tiempo
     await syncHunger(userId);
 
+    // Limpia tickets viejos (más de 30 días)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const { data: oldPrices } = await supabase
+      .from('prices')
+      .select('id, receipt_url')
+      .eq('user_id', userId)
+      .not('receipt_url', 'is', null)
+      .lt('date_recorded', cutoff);
+
+    if (oldPrices && oldPrices.length > 0) {
+      for (const p of oldPrices) {
+        if (!p.receipt_url) continue;
+        const urlParts = p.receipt_url.split('/receipts/');
+        if (urlParts.length > 1) {
+          await supabase.storage.from('receipts').remove([urlParts[1]]);
+        }
+        await supabase.from('prices').update({ receipt_url: null }).eq('id', p.id);
+      }
+    }
+
     const { data } = await supabase
       .from('profiles')
       .select('id, username, xp, level, pet_name, coins, hunger')

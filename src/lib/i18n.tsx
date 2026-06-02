@@ -174,6 +174,22 @@ const translations = {
     level_baby: 'Bebé',
     level_young: 'Joven',
     level_adult: 'Adulto',
+
+    // Leaderboard
+    lb_title: 'Ranking',
+    lb_subtitle: 'Los mejores recolectores de precios',
+    lb_loading: 'Cargando ranking...',
+    lb_empty: 'Sin usuarios aún.',
+    lb_products: 'precios',
+    lb_you: '(tú)',
+    lb_view: '🏆 Ranking',
+
+    // Receipt
+    receipt_label: 'Foto del ticket *',
+    receipt_hint: 'Toma una foto de tu ticket de compra como verificación.',
+    receipt_required: 'La foto del ticket es obligatoria.',
+    receipt_uploading: 'Subiendo imagen...',
+    receipt_change: 'Cambiar foto',
   },
 
   en: {
@@ -336,6 +352,22 @@ const translations = {
     level_baby: 'Baby',
     level_young: 'Young',
     level_adult: 'Adult',
+
+    // Leaderboard
+    lb_title: 'Leaderboard',
+    lb_subtitle: 'Top price collectors',
+    lb_loading: 'Loading leaderboard...',
+    lb_empty: 'No users yet.',
+    lb_products: 'prices',
+    lb_you: '(you)',
+    lb_view: '🏆 Leaderboard',
+
+    // Receipt
+    receipt_label: 'Receipt photo *',
+    receipt_hint: 'Take a photo of your purchase receipt for verification.',
+    receipt_required: 'Receipt photo is required.',
+    receipt_uploading: 'Uploading image...',
+    receipt_change: 'Change photo',
   },
 } as const;
 
