@@ -48,7 +48,7 @@ export default function Login() {
         <form onSubmit={handleLogin} className={styles.form}>
           <div className={styles.inputGroup}>
             <label className="label-sm">{t.login_username}</label>
-            <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} required placeholder="e.g. Puguita" className={styles.input} autoCapitalize="none" />
+            <input type="text" id="username" value={username} onChange={e => setUsername(e.target.value)} required placeholder={t.login_username_placeholder} className={styles.input} autoCapitalize="none" />
           </div>
           <div className={styles.inputGroup}>
             <label className="label-sm">{t.login_password}</label>
