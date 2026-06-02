@@ -1,7 +1,7 @@
 /* FLOATING VARIANT */
 .floatingContainer {
   position: fixed;
-  bottom: 24px;
+  bottom: 80px;
   right: 24px;
   z-index: 1000;
   display: flex;
@@ -10,6 +10,13 @@
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@media (max-width: 768px) {
+  .floatingContainer {
+    bottom: 90px;
+    right: 16px;
+  }
 }
 
 .floatingContainer.visible {

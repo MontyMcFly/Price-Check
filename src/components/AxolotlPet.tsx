@@ -5,6 +5,7 @@ import { LEVEL_THRESHOLDS, getNextLevelThreshold } from '@/lib/gamification';
 import Image from 'next/image';
 import styles from './AxolotlPet.module.css';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface Props {
   variant?: 'floating' | 'dashboard';
@@ -12,6 +13,7 @@ interface Props {
 
 export default function AxolotlPet({ variant = 'floating' }: Props) {
   const { profile } = useAuth();
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -23,6 +25,7 @@ export default function AxolotlPet({ variant = 'floating' }: Props) {
   }, [profile]);
 
   if (!profile) return null;
+  if (variant === 'floating' && pathname === '/') return null;
 
   const xp = profile.xp || 0;
   const level = profile.level || 1;
@@ -67,7 +70,7 @@ export default function AxolotlPet({ variant = 'floating' }: Props) {
     <div className={styles.dashboardContainer} style={{ position: 'relative' }}>
       <button 
         onClick={() => setShowInfo(true)}
-        style={{ position: 'absolute', top: '16px', left: '16px', background: 'var(--color-surface-container-highest)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-on-surface)' }}
+        style={{ position: 'absolute', bottom: '16px', left: '16px', background: 'var(--color-surface-container-highest)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-on-surface)' }}
         aria-label="Información de XP"
       >
         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>help</span>

@@ -261,7 +261,7 @@ export default function ProductsManager() {
             return (
               <div key={group.name} className={styles.productCard} style={{ display: 'flex', flexDirection: 'column', padding: '16px' }}>
                 {/* Header: Title and best option summary */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h3 className="headline-sm" style={{ fontWeight: 600 }}>{group.name}</h3>
                     {bestOption ? (
