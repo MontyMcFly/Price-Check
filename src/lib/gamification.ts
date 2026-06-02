@@ -76,7 +76,7 @@ export async function syncHunger(userId: string): Promise<void> {
   
   // Only update if at least an hour has passed to avoid unnecessary DB writes
   if (hoursPassed >= 1) {
-    const hungerDecay = Math.floor(hoursPassed) * 5; // Pierde 5 de hambre por hora
+    const hungerDecay = Math.floor(hoursPassed * 0.52); // ~0.52/hr → tarda ~8 días en vaciarse
     const newHunger = Math.max(0, (profile.hunger ?? 100) - hungerDecay);
     
     await supabase
