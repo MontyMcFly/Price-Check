@@ -7,6 +7,7 @@ import styles from './page.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import AxolotlPet from '@/components/AxolotlPet';
+import { useT, useLanguage } from '@/lib/i18n';
 
 interface Product {
   id: string;
@@ -18,6 +19,8 @@ interface Product {
 export default function Dashboard() {
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
+  const t = useT();
+  const { lang, setLang } = useLanguage();
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [listCount, setListCount] = useState(0);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -32,7 +35,6 @@ export default function Dashboard() {
     if (!user) return;
 
     async function fetchDashboardData() {
-      // Fetch 5 most recently added products
       const { data: products } = await supabase
         .from('products')
         .select('id, name, category, created_at')
@@ -41,7 +43,6 @@ export default function Dashboard() {
 
       setRecentProducts(products || []);
 
-      // Fetch count of user's pending list items
       const { count } = await supabase
         .from('shopping_list')
         .select('*', { count: 'exact', head: true })
@@ -58,7 +59,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <p className="body-md">Loading...</p>
+        <p className="body-md">{t.dash_loading}</p>
       </div>
     );
   }
@@ -72,12 +73,24 @@ export default function Dashboard() {
           <div>
             <h1 className="headline-lg">Price Check</h1>
             <h2 className="headline-md" style={{ marginTop: 'var(--spacing-sm)' }}>
-              Hello, {profile?.username || 'there'} 👋
+              {t.dash_hello}, {profile?.username || 'there'} 👋
             </h2>
-            <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Ready to find the best deals today?</p>
+            <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.dash_greeting}</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', alignItems: 'flex-end' }}>
-
+            <button
+              onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                backgroundColor: 'transparent',
+                padding: '6px 12px', borderRadius: 'var(--radius-full)',
+                color: 'var(--color-primary)', fontWeight: 600,
+                fontSize: '13px', border: '1px solid var(--color-primary)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>translate</span>
+              {lang === 'es' ? 'EN' : 'ES'}
+            </button>
             <button onClick={signOut} style={{
               display: 'flex', alignItems: 'center', gap: '4px',
               backgroundColor: 'transparent',
@@ -86,7 +99,7 @@ export default function Dashboard() {
               fontSize: '13px', border: '1px solid var(--color-outline-variant)'
             }}>
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-              Sign Out
+              {t.dash_signout}
             </button>
           </div>
         </div>
@@ -101,24 +114,24 @@ export default function Dashboard() {
           <span className="material-symbols-outlined" style={{ fontSize: '28px', color: 'var(--color-primary)' }}>shopping_basket</span>
           <span className="headline-md" style={{ color: 'var(--color-primary)' }}>{listCount}</span>
         </div>
-        <p className="body-md">items on your shopping list</p>
+        <p className="body-md">{t.dash_items_on_list}</p>
         <Link href="/list" style={{
           display: 'inline-block', marginTop: 'var(--spacing-sm)',
           color: 'var(--color-primary)', fontWeight: 600, fontSize: '14px'
         }}>
-          View list →
+          {t.dash_view_list}
         </Link>
       </section>
 
       <section className={styles.section}>
-        <h3 className="headline-sm">Recently Added Products</h3>
+        <h3 className="headline-sm">{t.dash_recent}</h3>
         {productsLoading ? (
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Loading...</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.dash_loading}</p>
         ) : recentProducts.length === 0 ? (
           <div className={styles.emptyCard}>
             <span className="material-symbols-outlined" style={{ fontSize: '36px', color: 'var(--color-outline-variant)' }}>inventory_2</span>
             <p className="body-md" style={{ color: 'var(--color-secondary)', marginTop: 'var(--spacing-sm)' }}>
-              No products yet. <Link href="/add" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Add the first one!</Link>
+              {t.dash_no_products} <Link href="/add" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{t.dash_add_first}</Link>
             </p>
           </div>
         ) : (

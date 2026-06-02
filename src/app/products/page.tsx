@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import ProductPriceForm from '@/components/ProductPriceForm';
 import { calculatePerformance } from '@/lib/utils/unitConverter';
 import { feedAxolotl } from '@/lib/gamification';
+import { useT } from '@/lib/i18n';
 
 interface Store {
   id: string;
@@ -53,6 +54,7 @@ const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
 export default function ProductsManager() {
   const { user, loading, refreshProfile } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -157,7 +159,7 @@ export default function ProductsManager() {
 
     if (existing && existing.length > 0) {
       setAddedIds(prev => new Set([...prev, product.id]));
-      showToast(`"${product.name}" ya está en tu lista`);
+      showToast(`"${product.name}" ${t.catalog_already_in_list}`);
       return;
     }
     const { error } = await supabase.from('shopping_list').insert({
@@ -167,7 +169,7 @@ export default function ProductsManager() {
       setAddedIds(prev => new Set([...prev, product.id]));
       await feedAxolotl(user.id, 20);
       if (refreshProfile) await refreshProfile();
-      showToast(`"${product.name}" agregado a tu lista (+20% Hambre) ✓`);
+      showToast(`"${product.name}" ${t.catalog_added_to_list}`);
     }
   };
 
@@ -199,14 +201,14 @@ export default function ProductsManager() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Seguro? Esto eliminará también todos los precios y entradas de lista asociados a esta variante.')) return;
+    if (!confirm(t.catalog_confirm_delete_product)) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (!error) fetchProducts();
     else alert('Error: ' + error.message);
   };
 
   const handleDeletePrice = async (productId: string, storeId: string) => {
-    if (!confirm('¿Seguro que deseas eliminar este precio de la tienda?')) return;
+    if (!confirm(t.catalog_confirm_delete_price)) return;
     const { error } = await supabase.from('prices').delete().eq('product_id', productId).eq('store_id', storeId);
     if (!error) fetchProducts();
     else alert('Error: ' + error.message);
@@ -223,7 +225,7 @@ export default function ProductsManager() {
     });
   };
 
-  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}><p className="body-md">Cargando...</p></div>;
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}><p className="body-md">{t.catalog_loading}</p></div>;
 
   return (
     <div className={styles.container}>
@@ -231,13 +233,13 @@ export default function ProductsManager() {
 
       <header className={styles.header}>
         <div>
-          <h1 className="headline-lg">Catálogo Inteligente</h1>
+          <h1 className="headline-lg">{t.catalog_title}</h1>
           <p className="body-md" style={{ color: 'var(--color-secondary)' }}>
-            Comparador de precios por rendimiento
+            {t.catalog_subtitle}
           </p>
         </div>
         <button onClick={() => setModalMode('add')} className={styles.addButton}>
-          <span className="material-symbols-outlined">add</span>Nuevo
+          <span className="material-symbols-outlined">add</span>{t.catalog_new}
         </button>
       </header>
 
@@ -248,12 +250,12 @@ export default function ProductsManager() {
       )}
 
       {productsLoading ? (
-        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Cargando catálogo...</p>
+        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.catalog_loading}</p>
       ) : productGroups.length === 0 ? (
         <div className={styles.emptyState}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-outline-variant)' }}>inventory_2</span>
-          <p className="body-lg" style={{ marginTop: '12px' }}>Sin productos aún.</p>
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Agrega un producto para empezar a comparar precios.</p>
+          <p className="body-lg" style={{ marginTop: '12px' }}>{t.catalog_empty}</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.catalog_empty_hint}</p>
         </div>
       ) : (
         <div className={styles.productList}>
@@ -269,7 +271,7 @@ export default function ProductsManager() {
                     <h3 className="headline-sm" style={{ fontWeight: 600 }}>{group.name}</h3>
                     {bestOption ? (
                       <div style={{ marginTop: '8px', background: 'var(--color-primary-container)', color: 'var(--color-on-primary-container)', padding: '8px 12px', borderRadius: '8px', display: 'inline-block' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600 }}>★ Mejor Opción</div>
+                        <div style={{ fontSize: '13px', fontWeight: 600 }}>{t.catalog_best}</div>
                         <div style={{ fontSize: '15px' }}>
                           {bestOption.priceRecord.stores.name}: <strong>${bestOption.priceRecord.price.toFixed(2)}</strong>
                         </div>
@@ -280,7 +282,7 @@ export default function ProductsManager() {
                         </div>
                       </div>
                     ) : (
-                      <p className="body-sm" style={{ color: 'var(--color-outline)', marginTop: '4px' }}>Sin precios para comparar rendimientos.</p>
+                      <p className="body-sm" style={{ color: 'var(--color-outline)', marginTop: '4px' }}>{t.catalog_no_prices}</p>
                     )}
                   </div>
                   
@@ -308,7 +310,7 @@ export default function ProductsManager() {
                     <span className="material-symbols-outlined" style={{ fontSize: '20px', marginRight: '4px' }}>
                       {isExpanded ? 'expand_less' : 'expand_more'}
                     </span>
-                    {isExpanded ? 'Ocultar comparativa' : `Ver comparativa (${group.comparisons.length} opciones)`}
+                    {isExpanded ? t.catalog_hide : `${t.catalog_show} (${group.comparisons.length} ${t.catalog_options})`}
                   </button>
                 </div>
 
@@ -377,11 +379,11 @@ export default function ProductsManager() {
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
-              <h2 className="headline-sm">Registrar Producto</h2>
+              <h2 className="headline-sm">{t.add_title}</h2>
               <button onClick={closeModal} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: 'var(--color-secondary)' }}>✕</button>
             </div>
             <ProductPriceForm
-              onSuccess={() => { fetchProducts(); closeModal(); showToast('Producto registrado ✓'); }}
+              onSuccess={() => { fetchProducts(); closeModal(); showToast(`${t.form_success}`); }}
               onCancel={closeModal}
             />
           </div>
@@ -392,32 +394,32 @@ export default function ProductsManager() {
       {modalMode === 'edit' && editingProduct && (
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-            <h2 className="headline-sm" style={{ marginBottom: 'var(--spacing-lg)' }}>Editar Producto</h2>
+            <h2 className="headline-sm" style={{ marginBottom: 'var(--spacing-lg)' }}>Edit</h2>
 
             <div className={styles.inputGroup}>
-              <label className="label-sm">Nombre *</label>
+              <label className="label-sm">{t.form_product_name}</label>
               <input type="text" value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className={styles.input} />
             </div>
             <div className={styles.inputGroup}>
-              <label className="label-sm">Marca</label>
+              <label className="label-sm">{t.form_brand}</label>
               <input type="text" value={editForm.brand} onChange={e => setEditForm({ ...editForm, brand: e.target.value })} className={styles.input} />
             </div>
             <div className={styles.inputGroup}>
-              <label className="label-sm">Categoría</label>
+              <label className="label-sm">{t.form_category}</label>
               <select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })} className={styles.input}>
-                <option value="">Seleccionar...</option>
-                {['Abarrotes','Bebidas','Lácteos','Carnes','Frutas y Verduras','Limpieza','Cuidado Personal','Electrónica','Electrodomésticos','Otro'].map(c => (
+                <option value="">{t.form_category_select}</option>
+                {t.categories.map((c: string) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </div>
             <div className={styles.inputRow}>
               <div className={styles.inputGroup} style={{ flex: 1 }}>
-                <label className="label-sm">Unidades</label>
+                <label className="label-sm">{t.form_units}</label>
                 <input type="number" min="1" value={editForm.package_size} onChange={e => setEditForm({ ...editForm, package_size: e.target.value })} className={styles.input} />
               </div>
               <div className={styles.inputGroup} style={{ flex: 2 }}>
-                <label className="label-sm">Contenido por unidad</label>
+                <label className="label-sm">{t.form_content}</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input type="number" min="0" step="0.1" value={editForm.quantity_amount} onChange={e => setEditForm({ ...editForm, quantity_amount: e.target.value })} className={styles.input} placeholder="355" />
                   <select value={editForm.unit} onChange={e => setEditForm({ ...editForm, unit: e.target.value })} className={styles.input} style={{ maxWidth: '72px' }}>
@@ -428,8 +430,8 @@ export default function ProductsManager() {
             </div>
 
             <div className={styles.modalActions}>
-              <button onClick={closeModal} className={styles.cancelBtn}>Cancelar</button>
-              <button onClick={handleEditSave} className={styles.saveBtn}>Guardar</button>
+              <button onClick={closeModal} className={styles.cancelBtn}>{t.form_cancel}</button>
+              <button onClick={handleEditSave} className={styles.saveBtn}>{t.form_save}</button>
             </div>
           </div>
         </div>

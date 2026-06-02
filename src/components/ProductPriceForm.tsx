@@ -5,12 +5,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { addReward } from '@/lib/gamification';
 import styles from './ProductPriceForm.module.css';
+import { useT } from '@/lib/i18n';
 
 const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
-const CATEGORIES = [
-  'Abarrotes', 'Bebidas', 'Lácteos', 'Carnes', 'Frutas y Verduras',
-  'Limpieza', 'Cuidado Personal', 'Electrónica', 'Electrodomésticos', 'Otro'
-];
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -21,6 +18,7 @@ interface Props {
 
 export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
   const { user, refreshProfile } = useAuth();
+  const t = useT();
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -60,7 +58,6 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
 
       if (existingProduct && existingProduct.length > 0) {
         productId = existingProduct[0].id;
-        // Update product metadata if we have new info
         await supabase.from('products').update({
           brand: form.brand || undefined,
           category: form.category || undefined,
@@ -143,7 +140,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         await refreshProfile();
       }
 
-      setSuccess('¡Producto y precio guardados correctamente! (+10 XP, +5 🪙 para tu Axolotl)');
+      setSuccess(t.form_success);
       setForm({
         productName: '', brand: '', category: '', units: '1', contentAmount: '',
         contentUnit: 'ml', date: today(), store: '', branch: '', price: '',
@@ -152,8 +149,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
       onSuccess?.();
 
     } catch (err: unknown) {
-      // Handle Supabase PostgrestError and native Error
-      let message = 'Error al guardar';
+      let message = t.form_error;
       if (err && typeof err === 'object') {
         if ('message' in err) message = String((err as { message: unknown }).message);
         if ('details' in err && (err as { details: unknown }).details) {
@@ -174,72 +170,36 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
 
       {/* ── SECTION: Producto ── */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Producto</p>
+        <p className={styles.sectionLabel}>{t.form_product_section}</p>
 
         <div className={styles.field}>
-          <label className={styles.label}>Nombre del producto *</label>
-          <input
-            type="text"
-            value={form.productName}
-            onChange={e => set('productName', e.target.value)}
-            required
-            placeholder="ej. Leche entera"
-            className={styles.input}
-          />
+          <label className={styles.label}>{t.form_product_name}</label>
+          <input type="text" value={form.productName} onChange={e => set('productName', e.target.value)} required placeholder={t.form_product_placeholder} className={styles.input} />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Marca</label>
-          <input
-            type="text"
-            value={form.brand}
-            onChange={e => set('brand', e.target.value)}
-            placeholder="ej. Lala"
-            className={styles.input}
-          />
+          <label className={styles.label}>{t.form_brand}</label>
+          <input type="text" value={form.brand} onChange={e => set('brand', e.target.value)} placeholder={t.form_brand_placeholder} className={styles.input} />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Categoría</label>
-          <select
-            value={form.category}
-            onChange={e => set('category', e.target.value)}
-            className={styles.input}
-          >
-            <option value="">Seleccionar...</option>
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          <label className={styles.label}>{t.form_category}</label>
+          <select value={form.category} onChange={e => set('category', e.target.value)} className={styles.input}>
+            <option value="">{t.form_category_select}</option>
+            {t.categories.map((c: string) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
 
         <div className={styles.row}>
           <div className={styles.field}>
-            <label className={styles.label}>Unidades</label>
-            <input
-              type="number"
-              min="1"
-              value={form.units}
-              onChange={e => set('units', e.target.value)}
-              className={styles.input}
-              placeholder="1"
-            />
+            <label className={styles.label}>{t.form_units}</label>
+            <input type="number" min="1" value={form.units} onChange={e => set('units', e.target.value)} className={styles.input} placeholder="1" />
           </div>
           <div className={styles.field} style={{ flex: 2 }}>
-            <label className={styles.label}>Contenido por unidad</label>
+            <label className={styles.label}>{t.form_content}</label>
             <div className={styles.unitGroup}>
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={form.contentAmount}
-                onChange={e => set('contentAmount', e.target.value)}
-                className={styles.input}
-                placeholder="355"
-              />
-              <select
-                value={form.contentUnit}
-                onChange={e => set('contentUnit', e.target.value)}
-                className={`${styles.input} ${styles.unitSelect}`}
-              >
+              <input type="number" min="0" step="0.1" value={form.contentAmount} onChange={e => set('contentAmount', e.target.value)} className={styles.input} placeholder="355" />
+              <select value={form.contentUnit} onChange={e => set('contentUnit', e.target.value)} className={`${styles.input} ${styles.unitSelect}`}>
                 {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
@@ -247,71 +207,38 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Fecha de compra *</label>
-          <input
-            type="date"
-            value={form.date}
-            onChange={e => set('date', e.target.value)}
-            required
-            className={styles.input}
-          />
+          <label className={styles.label}>{t.form_date}</label>
+          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={styles.input} />
         </div>
       </div>
 
       {/* ── SECTION: Tienda & Precio ── */}
       <div className={styles.section}>
-        <p className={styles.sectionLabel}>Tienda y Precio</p>
+        <p className={styles.sectionLabel}>{t.form_store_section}</p>
 
         <div className={styles.field}>
-          <label className={styles.label}>Tienda *</label>
-          <input
-            type="text"
-            value={form.store}
-            onChange={e => set('store', e.target.value)}
-            required
-            placeholder="ej. Walmart"
-            className={styles.input}
-          />
+          <label className={styles.label}>{t.form_store}</label>
+          <input type="text" value={form.store} onChange={e => set('store', e.target.value)} required placeholder={t.form_store_placeholder} className={styles.input} />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Sucursal <span className={styles.optional}>(opcional)</span></label>
-          <input
-            type="text"
-            value={form.branch}
-            onChange={e => set('branch', e.target.value)}
-            placeholder="ej. Centro"
-            className={styles.input}
-          />
+          <label className={styles.label}>{t.form_branch} <span className={styles.optional}>{t.form_branch_optional}</span></label>
+          <input type="text" value={form.branch} onChange={e => set('branch', e.target.value)} placeholder={t.form_branch_placeholder} className={styles.input} />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Precio *</label>
+          <label className={styles.label}>{t.form_price}</label>
           <div className={styles.priceWrapper}>
             <span className={styles.currencySymbol}>$</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.price}
-              onChange={e => set('price', e.target.value)}
-              required
-              placeholder="0.00"
-              className={`${styles.input} ${styles.priceInput}`}
-            />
+            <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} required placeholder="0.00" className={`${styles.input} ${styles.priceInput}`} />
           </div>
         </div>
       </div>
 
       {user && (
         <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={addToList}
-            onChange={e => setAddToList(e.target.checked)}
-            className={styles.checkbox}
-          />
-          <span>Agregar también a mi lista de compras</span>
+          <input type="checkbox" checked={addToList} onChange={e => setAddToList(e.target.checked)} className={styles.checkbox} />
+          <span>{t.form_add_to_list}</span>
         </label>
       )}
 
@@ -321,11 +248,11 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
       <div className={styles.actions}>
         {onCancel && (
           <button type="button" onClick={onCancel} className={styles.cancelBtn}>
-            Cancelar
+            {t.form_cancel}
           </button>
         )}
         <button type="submit" disabled={loading} className={styles.submitBtn}>
-          {loading ? 'Guardando...' : 'Guardar'}
+          {loading ? t.form_saving : t.form_save}
         </button>
       </div>
     </form>

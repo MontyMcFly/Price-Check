@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { addReward } from '@/lib/gamification';
 import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
+import { useT } from '@/lib/i18n';
 
 interface ListItem {
   id: string;
@@ -23,6 +24,7 @@ interface ListItem {
 export default function SmartList() {
   const { user, loading, refreshProfile } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [items, setItems] = useState<ListItem[]>([]);
   const [listLoading, setListLoading] = useState(true);
 
@@ -67,7 +69,7 @@ export default function SmartList() {
           product_id: item.product_id,
           product: prod,
           bestPrice: bestPriceObj?.price || 0,
-          bestStore: bestPriceObj?.stores ? (Array.isArray(bestPriceObj.stores) ? (bestPriceObj.stores[0] as any).name : (bestPriceObj.stores as any).name) : 'Sin precio',
+          bestStore: bestPriceObj?.stores ? (Array.isArray(bestPriceObj.stores) ? (bestPriceObj.stores[0] as any).name : (bestPriceObj.stores as any).name) : '',
         } as ListItem;
       })
     );
@@ -77,13 +79,12 @@ export default function SmartList() {
   }
 
   const handleRemoveFromList = async (id: string) => {
-    if (!confirm('¿Quitar este producto de tu lista?')) return;
+    if (!confirm(t.list_confirm_remove)) return;
     await supabase.from('shopping_list').delete().eq('id', id);
     setItems(items.filter(i => i.id !== id));
   };
 
   const handleMarkPurchased = async (item: ListItem) => {
-    // Mark as purchased with the current date and best price
     await supabase
       .from('shopping_list')
       .update({
@@ -108,50 +109,42 @@ export default function SmartList() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className="headline-lg">Mi Lista</h1>
+        <h1 className="headline-lg">{t.list_title}</h1>
         <p className="body-md" style={{ color: 'var(--color-secondary)' }}>
-          {items.length} productos{totalEstimated > 0 ? ` • Est. total: ` : ''}
+          {items.length} {t.list_products}{totalEstimated > 0 ? ` • ${t.list_est_total} ` : ''}
           {totalEstimated > 0 && <strong className="price-display" style={{ fontSize: '18px' }}>${totalEstimated.toFixed(2)}</strong>}
         </p>
       </header>
 
       {listLoading ? (
-        <p className="body-md">Cargando tu lista...</p>
+        <p className="body-md">{t.list_loading}</p>
       ) : items.length === 0 ? (
         <div className={styles.emptyState}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-outline-variant)' }}>shopping_cart</span>
-          <p className="body-lg" style={{ marginTop: 'var(--spacing-md)' }}>Tu lista está vacía.</p>
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Ve al Catálogo y toca + para agregar productos.</p>
+          <p className="body-lg" style={{ marginTop: 'var(--spacing-md)' }}>{t.list_empty}</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.list_empty_hint}</p>
         </div>
       ) : (
         <div className={styles.listGroup}>
           {items.map(item => (
             <div key={item.id} className={styles.listItem}>
               <div className={styles.itemHeader}>
-                <h3 className="body-lg" style={{ fontWeight: 600 }}>{item.product?.name || 'Desconocido'}</h3>
+                <h3 className="body-lg" style={{ fontWeight: 600 }}>{item.product?.name || t.history_unknown}</h3>
               </div>
               <div className={styles.priceInfo}>
                 <span className="label-caps" style={{ color: 'var(--color-secondary)' }}>
-                  {item.bestPrice > 0 ? `Mejor en ${item.bestStore}` : 'Sin precio registrado'}
+                  {item.bestPrice > 0 ? `${t.list_best_at} ${item.bestStore}` : t.list_no_price}
                 </span>
                 {item.bestPrice > 0 && <span className="price-display">${item.bestPrice.toFixed(2)}</span>}
               </div>
               <div className={styles.actionRow}>
-                <button
-                  onClick={() => handleRemoveFromList(item.id)}
-                  className={styles.removeBtn}
-                  aria-label="Quitar de la lista"
-                >
+                <button onClick={() => handleRemoveFromList(item.id)} className={styles.removeBtn} aria-label={t.list_remove}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                  Quitar
+                  {t.list_remove}
                 </button>
-                <button
-                  onClick={() => handleMarkPurchased(item)}
-                  className={styles.purchasedBtn}
-                  aria-label="Marcar como comprado"
-                >
+                <button onClick={() => handleMarkPurchased(item)} className={styles.purchasedBtn} aria-label={t.list_purchased}>
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
-                  Comprado
+                  {t.list_purchased}
                 </button>
               </div>
             </div>

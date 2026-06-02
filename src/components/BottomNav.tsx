@@ -3,17 +3,19 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import styles from './BottomNav.module.css';
-
-const navItems = [
-  { label: 'Dashboard', path: '/', icon: 'dashboard' },
-  { label: 'List', path: '/list', icon: 'receipt_long' },
-  { label: 'Add', path: '/add', icon: 'add_circle' },
-  { label: 'Catálogo', path: '/products', icon: 'local_mall' },
-  { label: 'History', path: '/history', icon: 'history' },
-];
+import { useT } from '@/lib/i18n';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const t = useT();
+
+  const navItems = [
+    { label: t.nav_dashboard, path: '/', icon: 'dashboard' },
+    { label: t.nav_list, path: '/list', icon: 'receipt_long' },
+    { label: t.nav_add, path: '/add', icon: 'add_circle' },
+    { label: t.nav_catalog, path: '/products', icon: 'local_mall' },
+    { label: t.nav_history, path: '/history', icon: 'history' },
+  ];
 
   return (
     <nav className={styles.bottomNav}>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
+import { useT, useLanguage } from '@/lib/i18n';
 
 interface PurchasedItem {
   id: string;
@@ -13,16 +14,12 @@ interface PurchasedItem {
   final_price: number;
   store_name: string;
   purchased_at: string;
-  product: {
-    id: string;
-    name: string;
-    category: string;
-  };
+  product: { id: string; name: string; category: string; };
 }
 
 interface DayGroup {
-  date: string; // YYYY-MM-DD
-  label: string; // Human readable
+  date: string;
+  label: string;
   items: PurchasedItem[];
   total: number;
 }
@@ -30,6 +27,8 @@ interface DayGroup {
 export default function History() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const t = useT();
+  const { lang } = useLanguage();
   const [dayGroups, setDayGroups] = useState<DayGroup[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
@@ -61,7 +60,6 @@ export default function History() {
       return;
     }
 
-    // Group by day
     const groupMap = new Map<string, PurchasedItem[]>();
     for (const item of (data || [])) {
       const prod = Array.isArray(item.products) ? item.products[0] : item.products;
@@ -71,7 +69,7 @@ export default function History() {
         quantity: item.quantity,
         product_id: item.product_id,
         final_price: item.final_price || 0,
-        store_name: item.store_name || 'Desconocida',
+        store_name: item.store_name || t.history_unknown_store,
         purchased_at: item.purchased_at,
         product: prod,
       };
@@ -87,19 +85,14 @@ export default function History() {
 
       let label: string;
       if (date === today.toISOString().split('T')[0]) {
-        label = 'Hoy';
+        label = t.history_today;
       } else if (date === yesterday.toISOString().split('T')[0]) {
-        label = 'Ayer';
+        label = t.history_yesterday;
       } else {
-        label = d.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+        label = d.toLocaleDateString(lang === 'es' ? 'es-MX' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' });
       }
 
-      return {
-        date,
-        label,
-        items,
-        total: items.reduce((sum, it) => sum + (it.final_price * it.quantity), 0),
-      };
+      return { date, label, items, total: items.reduce((sum, it) => sum + (it.final_price * it.quantity), 0) };
     });
 
     setDayGroups(groups);
@@ -110,20 +103,14 @@ export default function History() {
     const newPrice = parseFloat(editPrice);
     if (isNaN(newPrice) || newPrice <= 0) return;
 
-    // Update the shopping_list record
-    await supabase
-      .from('shopping_list')
-      .update({ final_price: newPrice })
-      .eq('id', item.id);
+    await supabase.from('shopping_list').update({ final_price: newPrice }).eq('id', item.id);
 
-    // Also update the price in the prices table if it exists
     const { data: priceRecord } = await supabase
       .from('prices')
       .select('id, stores!inner(name)')
       .eq('product_id', item.product_id)
       .limit(10);
 
-    // Find matching store price and update it
     if (priceRecord) {
       for (const pr of priceRecord) {
         const storeName = Array.isArray(pr.stores) ? (pr.stores[0] as any).name : (pr.stores as any).name;
@@ -144,19 +131,17 @@ export default function History() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1 className="headline-lg">Historial</h1>
-        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>
-          Registro de tus compras completadas.
-        </p>
+        <h1 className="headline-lg">{t.history_title}</h1>
+        <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.history_subtitle}</p>
       </header>
 
       {historyLoading ? (
-        <p className="body-md">Cargando historial...</p>
+        <p className="body-md">{t.history_loading}</p>
       ) : dayGroups.length === 0 ? (
         <div className={styles.emptyState}>
           <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--color-outline-variant)' }}>receipt_long</span>
-          <p className="body-lg" style={{ marginTop: 'var(--spacing-md)' }}>Sin historial todavía.</p>
-          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Marca productos como comprados en tu lista para crear tu historial.</p>
+          <p className="body-lg" style={{ marginTop: 'var(--spacing-md)' }}>{t.history_empty}</p>
+          <p className="body-md" style={{ color: 'var(--color-secondary)' }}>{t.history_empty_hint}</p>
         </div>
       ) : (
         <div className={styles.dayList}>
@@ -164,13 +149,10 @@ export default function History() {
             const isExpanded = expandedDay === group.date;
             return (
               <div key={group.date} className={styles.dayCard}>
-                <button
-                  className={styles.dayHeader}
-                  onClick={() => setExpandedDay(isExpanded ? null : group.date)}
-                >
+                <button className={styles.dayHeader} onClick={() => setExpandedDay(isExpanded ? null : group.date)}>
                   <div>
                     <h3 className="body-lg" style={{ fontWeight: 600, textTransform: 'capitalize' }}>{group.label}</h3>
-                    <span className="label-sm" style={{ color: 'var(--color-secondary)' }}>{group.items.length} producto{group.items.length !== 1 ? 's' : ''}</span>
+                    <span className="label-sm" style={{ color: 'var(--color-secondary)' }}>{group.items.length} {t.list_products}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span className="price-display" style={{ color: 'var(--color-primary)' }}>${group.total.toFixed(2)}</span>
@@ -183,23 +165,13 @@ export default function History() {
                     {group.items.map(item => (
                       <div key={item.id} className={styles.historyItem}>
                         <div style={{ flex: 1 }}>
-                          <p className="body-md" style={{ fontWeight: 600 }}>{item.product?.name || 'Desconocido'}</p>
-                          <p className="label-sm" style={{ color: 'var(--color-secondary)' }}>
-                            {item.store_name} • x{item.quantity}
-                          </p>
+                          <p className="body-md" style={{ fontWeight: 600 }}>{item.product?.name || t.history_unknown}</p>
+                          <p className="label-sm" style={{ color: 'var(--color-secondary)' }}>{item.store_name} • x{item.quantity}</p>
                         </div>
 
                         {editingItem === item.id ? (
                           <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                            <input
-                              type="number"
-                              value={editPrice}
-                              onChange={e => setEditPrice(e.target.value)}
-                              className={styles.priceInput}
-                              step="0.01"
-                              min="0"
-                              autoFocus
-                            />
+                            <input type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} className={styles.priceInput} step="0.01" min="0" autoFocus />
                             <button onClick={() => handleUpdatePrice(item)} className={styles.confirmBtn}>
                               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check</span>
                             </button>
@@ -210,11 +182,7 @@ export default function History() {
                         ) : (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span className="price-display">${item.final_price.toFixed(2)}</span>
-                            <button
-                              onClick={() => { setEditingItem(item.id); setEditPrice(item.final_price.toString()); }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-secondary)', padding: '4px' }}
-                              aria-label="Actualizar precio"
-                            >
+                            <button onClick={() => { setEditingItem(item.id); setEditPrice(item.final_price.toString()); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-secondary)', padding: '4px' }} aria-label="Edit price">
                               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                             </button>
                           </div>
@@ -223,7 +191,7 @@ export default function History() {
                     ))}
 
                     <div className={styles.dayTotal}>
-                      <span className="label-caps">Total del día</span>
+                      <span className="label-caps">{t.history_day_total}</span>
                       <span className="price-display" style={{ fontSize: '22px', color: 'var(--color-primary)' }}>${group.total.toFixed(2)}</span>
                     </div>
                   </div>
