@@ -29,6 +29,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
 
   const [form, setForm] = useState({
     productName: '',
+    brand: '',
     category: '',
     units: '1',
     contentAmount: '',
@@ -61,6 +62,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         productId = existingProduct[0].id;
         // Update product metadata if we have new info
         await supabase.from('products').update({
+          brand: form.brand || undefined,
           category: form.category || undefined,
           quantity_amount: form.contentAmount ? parseFloat(form.contentAmount) : undefined,
           unit: form.contentAmount ? form.contentUnit : undefined,
@@ -71,6 +73,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
           .from('products')
           .insert({
             name: form.productName.trim(),
+            brand: form.brand.trim() || null,
             category: form.category || null,
             quantity_amount: form.contentAmount ? parseFloat(form.contentAmount) : null,
             unit: form.contentAmount ? form.contentUnit : null,
@@ -106,14 +109,14 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
         storeId = newStore.id;
       }
 
-      // 3. Insert price record
-      const { error: priceErr } = await supabase.from('prices').insert({
+      // 3. Upsert price record
+      const { error: priceErr } = await supabase.from('prices').upsert({
         product_id: productId,
         store_id: storeId,
         price: parseFloat(form.price),
         date_recorded: form.date,
         user_id: user?.id || null,
-      });
+      }, { onConflict: 'product_id,store_id' });
       if (priceErr) throw priceErr;
 
       // 4. Optionally add to shopping list
@@ -141,7 +144,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
 
       setSuccess('¡Producto y precio guardados correctamente! (+10 XP para tu Axolotl)');
       setForm({
-        productName: '', category: '', units: '1', contentAmount: '',
+        productName: '', brand: '', category: '', units: '1', contentAmount: '',
         contentUnit: 'ml', date: today(), store: '', branch: '', price: '',
       });
       setAddToList(false);
@@ -179,7 +182,18 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
             value={form.productName}
             onChange={e => set('productName', e.target.value)}
             required
-            placeholder="ej. Coca Cola"
+            placeholder="ej. Leche entera"
+            className={styles.input}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Marca</label>
+          <input
+            type="text"
+            value={form.brand}
+            onChange={e => set('brand', e.target.value)}
+            placeholder="ej. Lala"
             className={styles.input}
           />
         </div>

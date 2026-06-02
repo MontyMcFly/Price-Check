@@ -77,16 +77,7 @@ export default function Dashboard() {
             <p className="body-md" style={{ color: 'var(--color-secondary)' }}>Ready to find the best deals today?</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', alignItems: 'flex-end' }}>
-            <Link href="/products" style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              backgroundColor: 'var(--color-surface-container)',
-              padding: '8px 16px', borderRadius: 'var(--radius-full)',
-              color: 'var(--color-primary)', fontWeight: 600, textDecoration: 'none',
-              fontSize: '14px'
-            }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>inventory_2</span>
-              Catalog
-            </Link>
+
             <button onClick={signOut} style={{
               display: 'flex', alignItems: 'center', gap: '4px',
               backgroundColor: 'transparent',

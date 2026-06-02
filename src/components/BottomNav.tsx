@@ -8,7 +8,7 @@ const navItems = [
   { label: 'Dashboard', path: '/', icon: 'dashboard' },
   { label: 'List', path: '/list', icon: 'receipt_long' },
   { label: 'Add', path: '/add', icon: 'add_circle' },
-  { label: 'Route', path: '/route', icon: 'directions_run' },
+  { label: 'Catálogo', path: '/products', icon: 'local_mall' },
   { label: 'History', path: '/history', icon: 'history' },
 ];
 
