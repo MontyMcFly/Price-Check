@@ -7,6 +7,9 @@ import type { Session, User } from '@supabase/supabase-js';
 interface Profile {
   id: string;
   username: string;
+  xp?: number;
+  level?: number;
+  pet_name?: string;
 }
 
 interface AuthContextType {
@@ -34,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchProfile(userId: string) {
     const { data } = await supabase
       .from('profiles')
-      .select('id, username')
+      .select('id, username, xp, level, pet_name')
       .eq('id', userId)
       .single();
     setProfile(data);

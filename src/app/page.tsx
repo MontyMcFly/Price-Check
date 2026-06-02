@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import styles from './page.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import AxolotlPet from '@/components/AxolotlPet';
 
 interface Product {
   id: string;
@@ -99,6 +100,10 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      <section style={{ marginBottom: 'var(--spacing-xl)' }}>
+        <AxolotlPet variant="dashboard" />
+      </section>
 
       <section className={styles.summaryCard}>
         <div className={styles.savingsInfo}>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import { AuthProvider } from "@/lib/auth-context";
+import AxolotlPet from "@/components/AxolotlPet";
 
 export const metadata: Metadata = {
   title: "Price Check App",
@@ -24,6 +25,7 @@ export default function RootLayout({
             {children}
           </main>
           <BottomNav />
+          <AxolotlPet variant="floating" />
         </AuthProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { addXp } from '@/lib/gamification';
 import styles from './ProductPriceForm.module.css';
 
 const UNITS = ['ml', 'l', 'g', 'kg', 'oz', 'lb', 'piezas'];
@@ -133,9 +134,11 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
             status: 'pending',
           });
         }
+      if (user) {
+        await addXp(user.id, 10);
       }
 
-      setSuccess('¡Producto y precio guardados correctamente!');
+      setSuccess('¡Producto y precio guardados correctamente! (+10 XP para tu Axolotl)');
       setForm({
         productName: '', category: '', units: '1', contentAmount: '',
         contentUnit: 'ml', date: today(), store: '', branch: '', price: '',
@@ -144,7 +147,17 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
       onSuccess?.();
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al guardar';
+      // Handle Supabase PostgrestError and native Error
+      let message = 'Error al guardar';
+      if (err && typeof err === 'object') {
+        if ('message' in err) message = String((err as { message: unknown }).message);
+        if ('details' in err && (err as { details: unknown }).details) {
+          message += ' — ' + String((err as { details: unknown }).details);
+        }
+        if ('hint' in err && (err as { hint: unknown }).hint) {
+          message += ' (' + String((err as { hint: unknown }).hint) + ')';
+        }
+      }
       setError(message);
     } finally {
       setLoading(false);

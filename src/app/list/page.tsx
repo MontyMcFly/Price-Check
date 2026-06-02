@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { addXp } from '@/lib/gamification';
 import styles from './page.module.css';
 import { useRouter } from 'next/navigation';
 
@@ -74,7 +75,13 @@ export default function SmartList() {
   }
 
   const handleRemove = async (id: string) => {
-    await supabase.from('shopping_list').delete().eq('id', id);
+    // Instead of deleting, mark as purchased and award XP
+    await supabase.from('shopping_list').update({ status: 'purchased' }).eq('id', id);
+    if (user) {
+      await addXp(user.id, 5);
+      // Optional: Add a local state for toast notification
+      alert('+5 XP para tu Axolotl por completar un pendiente!');
+    }
     setItems(items.filter(i => i.id !== id));
   };
 
