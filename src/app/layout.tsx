@@ -21,7 +21,7 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <main>
+          <main className="app-container">
             {children}
           </main>
           <BottomNav />
