@@ -202,6 +202,13 @@ export default function ProductsManager() {
     else alert('Error: ' + error.message);
   };
 
+  const handleDeletePrice = async (productId: string, storeId: string) => {
+    if (!confirm('¿Seguro que deseas eliminar este precio de la tienda?')) return;
+    const { error } = await supabase.from('prices').delete().eq('product_id', productId).eq('store_id', storeId);
+    if (!error) fetchProducts();
+    else alert('Error: ' + error.message);
+  };
+
   const closeModal = () => { setModalMode(null); setEditingProduct(null); };
 
   const toggleGroup = (groupName: string) => {
@@ -333,7 +340,7 @@ export default function ProductsManager() {
                            <button onClick={() => openEdit(comp.product)} className={`${styles.iconButton} ${styles.editBtn}`} style={{ padding: '6px' }}>
                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
                            </button>
-                           <button onClick={() => handleDelete(comp.product.id)} className={`${styles.iconButton} ${styles.deleteBtn}`} style={{ padding: '6px' }}>
+                           <button onClick={() => handleDeletePrice(comp.product.id, comp.priceRecord.stores.id)} className={`${styles.iconButton} ${styles.deleteBtn}`} style={{ padding: '6px' }}>
                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
                            </button>
                         </div>

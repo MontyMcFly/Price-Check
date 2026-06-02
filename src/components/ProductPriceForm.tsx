@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
@@ -140,6 +140,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
       }
       if (user) {
         await addXp(user.id, 10);
+        await refreshProfile();
       }
 
       setSuccess('¡Producto y precio guardados correctamente! (+10 XP para tu Axolotl)');

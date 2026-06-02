@@ -20,7 +20,7 @@ interface ListItem {
 }
 
 export default function SmartList() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshProfile } = useAuth();
   const router = useRouter();
   const [items, setItems] = useState<ListItem[]>([]);
   const [listLoading, setListLoading] = useState(true);
@@ -79,6 +79,7 @@ export default function SmartList() {
     await supabase.from('shopping_list').update({ status: 'purchased' }).eq('id', id);
     if (user) {
       await addXp(user.id, 5);
+      await refreshProfile();
       // Optional: Add a local state for toast notification
       alert('+5 XP para tu Axolotl por completar un pendiente!');
     }
