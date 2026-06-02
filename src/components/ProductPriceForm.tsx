@@ -134,6 +134,7 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
             status: 'pending',
           });
         }
+      }
       if (user) {
         await addXp(user.id, 10);
       }
