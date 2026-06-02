@@ -259,7 +259,6 @@ export default function ProductPriceForm({ onSuccess, onCancel }: Props) {
             <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} required placeholder="0.00" className={`${styles.input} ${styles.priceInput}`} />
           </div>
         </div>
-        </div>
       </div>
 
       {/* ── SECTION: Ticket ── */}
