@@ -67,7 +67,7 @@ export default function AxolotlPet({ variant = 'floating' }: Props) {
     <div className={styles.dashboardContainer} style={{ position: 'relative' }}>
       <button 
         onClick={() => setShowInfo(true)}
-        style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--color-surface-container-highest)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-on-surface)' }}
+        style={{ position: 'absolute', top: '16px', left: '16px', background: 'var(--color-surface-container-highest)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-on-surface)' }}
         aria-label="Información de XP"
       >
         <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>help</span>
