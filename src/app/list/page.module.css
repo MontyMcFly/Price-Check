@@ -57,3 +57,47 @@
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--color-primary-container);
 }
+
+.actionRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-error);
+  background: transparent;
+  color: var(--color-error);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.removeBtn:hover {
+  background: var(--color-error-container);
+}
+
+.purchasedBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.purchasedBtn:hover {
+  opacity: 0.9;
+}
